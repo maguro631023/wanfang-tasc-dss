@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>萬芳醫院藥事供應鏈 TASC 決策支援專家系統</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@300;400;500;700&family=Spline+Sans+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pine:#13433f; --pine-2:#1d5c56; --moss:#3e7a6f;
+    --paper:#f4efe6; --paper-2:#ede5d6; --ink:#1c2624; --ink-soft:#465450;
+    --gold:#b8862f; --gold-2:#d9a441; --rust:#9c4a2b; --slate:#2f4858;
+    --line:#d6cbb6; --card:#fbf8f1; --shadow:0 1px 2px rgba(28,38,36,.06),0 10px 30px -12px rgba(28,38,36,.18);
+    --agi:#1d5c56; --ada:#b8862f; --ali:#5a4a7a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Noto Sans TC',sans-serif;background:var(--paper);color:var(--ink);
+    line-height:1.7;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(circle at 12% -5%,rgba(184,134,47,.06),transparent 40%),radial-gradient(circle at 95% 0%,rgba(19,67,63,.07),transparent 45%);
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+  /* header */
+  header{background:var(--pine);color:var(--paper);position:relative;overflow:hidden}
+  header::after{content:"℞";position:absolute;right:-10px;top:-40px;font-family:'Noto Serif TC',serif;font-size:330px;color:rgba(244,239,230,.05);line-height:1}
+  .head-inner{padding:34px 22px 28px;position:relative;z-index:2}
+  .kicker{font-family:'Spline Sans Mono',monospace;font-size:12px;letter-spacing:.32em;color:var(--gold-2);text-transform:uppercase;margin-bottom:10px}
+  h1{font-family:'Noto Serif TC',serif;font-weight:900;font-size:clamp(25px,4.4vw,42px);letter-spacing:.01em;line-height:1.2}
+  .sub{margin-top:10px;max-width:760px;color:#d9d2c4;font-weight:300;font-size:15px}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+  .badge{font-family:'Spline Sans Mono',monospace;font-size:11px;letter-spacing:.05em;padding:5px 11px;border:1px solid rgba(217,164,65,.4);border-radius:2px;color:var(--gold-2)}
+  /* nav */
+  nav{position:sticky;top:0;z-index:30;background:rgba(244,239,230,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  .nav-inner{display:flex;gap:2px;overflow-x:auto;max-width:1180px;margin:0 auto;padding:0 14px}
+  .nav-inner button{background:none;border:none;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:500;color:var(--ink-soft);padding:15px 16px;cursor:pointer;white-space:nowrap;border-bottom:2.5px solid transparent;transition:.2s}
+  .nav-inner button .n{font-family:'Spline Sans Mono',monospace;font-size:11px;color:var(--gold);margin-right:6px}
+  .nav-inner button:hover{color:var(--pine)}
+  .nav-inner button.active{color:var(--pine);border-bottom-color:var(--gold)}
+  /* sections */
+  section{display:none;padding:38px 0 60px;animation:fade .4s ease}
+  section.show{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  h2{font-family:'Noto Serif TC',serif;font-weight:700;font-size:27px;color:var(--pine);margin-bottom:6px;display:flex;align-items:baseline;gap:12px}
+  h2 .tag{font-family:'Spline Sans Mono',monospace;font-size:13px;color:var(--gold);font-weight:600}
+  .lead{color:var(--ink-soft);max-width:820px;margin-bottom:26px;font-size:15px}
+  h3{font-family:'Noto Serif TC',serif;font-weight:700;font-size:18px;color:var(--slate);margin:30px 0 14px;border-left:4px solid var(--gold);padding-left:12px}
+  /* cards */
+  .grid{display:grid;gap:16px}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:20px;box-shadow:var(--shadow)}
+  .card h4{font-family:'Noto Serif TC',serif;font-size:16px;color:var(--pine);margin-bottom:8px}
+  .card p{font-size:13.5px;color:var(--ink-soft)}
+  .stage{position:relative;padding-left:16px}
+  .stage::before{content:attr(data-n);position:absolute;left:-2px;top:-6px;font-family:'Spline Sans Mono',monospace;font-size:40px;color:rgba(184,134,47,.18);font-weight:600}
+  .pillrow{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 0}
+  .pill{font-size:12px;padding:4px 10px;border-radius:30px;font-weight:500}
+  .pill.agi{background:rgba(29,92,86,.12);color:var(--agi)}
+  .pill.ada{background:rgba(184,134,47,.15);color:#8a6420}
+  .pill.ali{background:rgba(90,74,122,.13);color:var(--ali)}
+  /* table */
+  table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--card);border-radius:6px;overflow:hidden;box-shadow:var(--shadow)}
+  th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--paper-2)}
+  th{background:var(--pine);color:var(--paper);font-weight:500;font-size:12.5px;letter-spacing:.03em}
+  tr:last-child td{border-bottom:none}
+  td.mono,th.mono{font-family:'Spline Sans Mono',monospace}
+  .scale-tfn{font-family:'Spline Sans Mono',monospace;color:var(--moss)}
+  /* notice */
+  .notice{background:rgba(184,134,47,.08);border:1px solid rgba(184,134,47,.3);border-left:4px solid var(--gold);border-radius:4px;padding:14px 18px;font-size:13.5px;color:#6e5418;margin:18px 0}
+  .notice b{color:var(--rust)}
+  /* controls */
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:8px 0 22px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow)}
+  .toolbar label{font-size:13px;font-weight:500;color:var(--slate)}
+  button.act{font-family:'Noto Sans TC',sans-serif;background:var(--pine);color:var(--paper);border:none;padding:10px 20px;border-radius:4px;font-size:14px;font-weight:500;cursor:pointer;transition:.2s;letter-spacing:.03em}
+  button.act:hover{background:var(--pine-2);transform:translateY(-1px)}
+  button.ghost{background:transparent;color:var(--pine);border:1.5px solid var(--moss)}
+  button.ghost:hover{background:rgba(29,92,86,.07)}
+  select,input[type=number]{font-family:'Noto Sans TC',sans-serif;border:1px solid var(--line);background:#fff;border-radius:3px;padding:5px 7px;font-size:13px;color:var(--ink)}
+  .matrix-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:6px;box-shadow:var(--shadow)}
+  table.eval td{padding:5px 6px}
+  table.eval select{font-size:12px;padding:4px 4px;width:100%;min-width:62px}
+  table.eval th{position:sticky;top:0}
+  table.eval td.rowlbl{background:var(--paper-2);font-weight:500;font-size:12.5px;color:var(--slate);white-space:nowrap;position:sticky;left:0;z-index:2}
+  table.eval th.corner{position:sticky;left:0;z-index:5}
+  .dim-head{background:var(--slate)!important;font-size:11px;text-align:center;letter-spacing:.1em}
+  /* results */
+  .bar-chart{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:22px;box-shadow:var(--shadow)}
+  .bar-row{display:grid;grid-template-columns:200px 1fr 66px;align-items:center;gap:12px;margin-bottom:9px;font-size:13px}
+  .bar-row .lbl{text-align:right;color:var(--slate);font-weight:500;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar-track{background:var(--paper-2);border-radius:3px;height:22px;position:relative;overflow:hidden}
+  .bar-fill{height:100%;border-radius:3px;transition:width .9s cubic-bezier(.2,.7,.2,1);display:flex;align-items:center}
+  .bar-row .val{font-family:'Spline Sans Mono',monospace;font-weight:600;color:var(--pine);text-align:right}
+  .rank-no{font-family:'Spline Sans Mono',monospace;font-size:11px;color:#fff;background:var(--slate);border-radius:30px;padding:1px 7px;margin-left:6px}
+  .top3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:6px 0 26px}
+  .medal{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--gold);border-radius:6px;padding:18px;box-shadow:var(--shadow)}
+  .medal .pos{font-family:'Spline Sans Mono',monospace;font-size:13px;color:var(--gold);font-weight:600;letter-spacing:.1em}
+  .medal .code{font-family:'Spline Sans Mono',monospace;color:var(--rust);font-weight:600;font-size:13px}
+  .medal h4{font-family:'Noto Serif TC',serif;font-size:18px;color:var(--pine);margin:6px 0 4px}
+  .medal .sc{font-family:'Spline Sans Mono',monospace;font-size:13px;color:var(--ink-soft)}
+  .rec{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:18px 20px;box-shadow:var(--shadow);margin-bottom:14px;border-left:4px solid var(--moss)}
+  .rec .rh{display:flex;align-items:baseline;gap:10px;margin-bottom:7px}
+  .rec .rh .c{font-family:'Spline Sans Mono',monospace;color:var(--gold);font-weight:600;font-size:13px}
+  .rec .rh h4{font-family:'Noto Serif TC',serif;font-size:17px;color:var(--pine)}
+  .rec p{font-size:14px;color:var(--ink-soft)}
+  .empty{padding:50px;text-align:center;color:var(--ink-soft);background:var(--card);border:1px dashed var(--line);border-radius:6px}
+  footer{background:var(--pine);color:#cfc8ba;font-size:12.5px;padding:24px 0;margin-top:30px}
+  footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  footer a{color:var(--gold-2)}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink-soft);margin:10px 0 18px}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:5px;vertical-align:middle}
+  @media(max-width:880px){.g3,.g4{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}.top3{grid-template-columns:1fr}.bar-row{grid-template-columns:120px 1fr 56px}.bar-row .lbl{font-size:11px}}
+  @media(max-width:560px){.g3,.g4{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="head-inner wrap">
+    <div class="kicker">Triple-A Supply Chain · OPA–ALWAS · Fuzzy Rough Sets</div>
+    <h1>萬芳醫院藥事供應鏈<br>TASC 決策支援專家系統</h1>
+    <p class="sub">以三能力供應鏈框架(敏捷性 / 適應性 / 一致性)為核心,整合序數優先法(OPA)、Aczél–Alsina 加權評估(ALWAS)與模糊粗糙集(FRS)理論,於不確定與專家主觀判斷下,為臺北市立萬芳醫院藥事部門排序關鍵能力準則與績效指標。</p>
+    <div class="badges">
+      <span class="badge">12 項 TASC 準則</span>
+      <span class="badge">11 項藥事績效指標</span>
+      <span class="badge">10 級語言模糊尺度</span>
+      <span class="badge">FRS · Aczél–Alsina</span>
+    </div>
+  </div>
+</header>
+
+<nav><div class="nav-inner" id="nav">
+  <button class="active" data-s="s0"><span class="n">00</span>系統與方法</button>
+  <button data-s="s1"><span class="n">01</span>準則權重評估 · OPA</button>
+  <button data-s="s2"><span class="n">02</span>績效指標評估 · ALWAS</button>
+  <button data-s="s3"><span class="n">03</span>分析結果</button>
+  <button data-s="s4"><span class="n">04</span>萬芳策略建議</button>
+</div></nav>
+
+<div class="wrap">
+
+<!-- ============ S0 ============ -->
+<section id="s0" class="show">
+  <h2><span class="tag">總覽</span>專家系統運作架構</h2>
+  <p class="lead">本系統將藥事供應鏈決策視為「多準則決策(MCDM)」問題。專家以語言詞表達主觀判斷,系統將其轉為三角模糊數,再以模糊粗糙集刻劃專家間的共識(下界近似)與不確定(上界近似),最後由 OPA 求得準則權重、由 ALWAS 排序績效指標。四個階段如下。</p>
+
+  <div class="grid g4">
+    <div class="card stage" data-n="1"><h4>階段一　準則與指標確立</h4><p>由文獻彙整 12 項 TASC 準則與 11 項藥事績效指標,經萬芳醫院藥事、採購、臨床與資訊專家共同確認其理論基礎與實務適用性。</p></div>
+    <div class="card stage" data-n="2"><h4>階段二　準則權重(OPA)</h4><p>專家以序數判斷各準則重要性。經模糊粗糙化與彙總後計分排序,以線性規劃封閉解求得權重向量 ωⱼ。</p></div>
+    <div class="card stage" data-n="3"><h4>階段三　指標排序(ALWAS)</h4><p>評估各準則對每項績效指標的影響,經正規化與 Aczél–Alsina 加權算術/幾何平均,計算綜合分數 Zᵢ 並排序。</p></div>
+    <div class="card stage" data-n="4"><h4>階段四　穩健性檢驗</h4><p>透過調整聚合參數 μ、β、ϑ 進行敏感度分析,確認排序結果在不同風險態度下維持穩定。</p></div>
+  </div>
+
+  <h3>三能力(Triple-A)準則架構</h3>
+  <div class="grid g3">
+    <div class="card"><h4 style="color:var(--agi)">敏捷性 Agility</h4><p>對供需波動的快速回應能力,確保關鍵藥品不中斷供應。</p><div class="pillrow"><span class="pill agi">A1 整合先進科技</span><span class="pill agi">A2 資料可視性</span><span class="pill agi">A3 應變計畫</span><span class="pill agi">A4 危機管理團隊</span></div></div>
+    <div class="card"><h4 style="color:#8a6420">適應性 Adaptability</h4><p>面對中斷時重構供應鏈流程、維持照護連續性的能力。</p><div class="pillrow"><span class="pill ada">A5 持續環境掃描</span><span class="pill ada">A6 彈性</span><span class="pill ada">A7 跨職能團隊</span><span class="pill ada">A8 決策分權</span></div></div>
+    <div class="card"><h4 style="color:var(--ali)">一致性 Alignment</h4><p>供應鏈活動與院方目標、臨床優先及法規之策略同步。</p><div class="pillrow"><span class="pill ali">A9 資訊與知識整合</span><span class="pill ali">A10 政策與法規一致</span><span class="pill ali">A11 目標一致</span><span class="pill ali">A12 風險分擔</span></div></div>
+  </div>
+
+  <h3>語言評估尺度(三角模糊數)</h3>
+  <table>
+    <thead><tr><th>語言詞</th><th class="mono">縮寫</th><th>程度</th><th class="mono">三角模糊數 (l, m, u)</th></tr></thead>
+    <tbody id="scaleTable"></tbody>
+  </table>
+
+  <div class="notice">
+    <b>關於本系統的精確度與透明性 ——</b>
+    準則權重(OPA)階段完整實作論文之模糊粗糙化(Bonferroni 上/下界近似)、彙總、計分(Eq. 20)與 OPA 線性規劃封閉解,可<b>精確重現原論文 Table 10 與 Table 11</b>。績效指標(ALWAS)階段採用院方專家小組之彙總共識矩陣(對應論文 Table 12),依 Eq. 25–29 的 Aczél–Alsina 流程計算;原論文 Block III/IV 的中間運算式存在記號不一致,本系統以方程式之一致結構實作,輸出排序具方法學依據。所有判斷由萬芳專家輸入,可隨時調整。
+  </div>
+</section>
+
+<!-- ============ S1 OPA ============ -->
+<section id="s1">
+  <h2><span class="tag">階段二</span>TASC 準則重要性評估 · OPA</h2>
+  <p class="lead">請各位萬芳醫院專家就 12 項 TASC 準則對藥事供應鏈績效的「重要性」給予語言評分。系統將以模糊粗糙集刻劃判斷的不確定區間,計算各準則權重與排序。預設已載入原論文 7 位專家之評估資料供參照與驗證。</p>
+  <div class="toolbar">
+    <label>專家人數</label>
+    <select id="opaExperts" onchange="rebuildOPA()"><option>3</option><option>4</option><option>5</option><option>6</option><option selected>7</option><option>8</option><option>9</option></select>
+    <button class="ghost" onclick="loadOPADemo()">載入論文示範資料</button>
+    <button class="act" onclick="runAll()">執行分析 →</button>
+  </div>
+  <div class="matrix-scroll"><table class="eval" id="opaTable"></table></div>
+</section>
+
+<!-- ============ S2 ALWAS ============ -->
+<section id="s2">
+  <h2><span class="tag">階段三</span>準則對績效指標之影響評估 · ALWAS</h2>
+  <p class="lead">請每位萬芳醫院專家就每一項 TASC 準則(欄)對各項藥事績效指標(列)的「影響程度」逐格評分。系統以「目前編輯專家」切換各專家矩陣,並跨專家以模糊粗糙集建構不確定區間(下界=共識、上界=分歧),再結合 OPA 權重以 Aczél–Alsina 聚合排序。當各專家判斷出現差異時,FRS 的不確定建模即完整啟動。</p>
+  <div class="toolbar">
+    <label>專家人數</label>
+    <select id="alwasExperts" onchange="rebuildALWAS()"><option>3</option><option>4</option><option>5</option><option>6</option><option selected>7</option><option>8</option><option>9</option></select>
+    <label>目前編輯專家</label>
+    <select id="alwasCur" onchange="renderALWAS()"></select>
+    <button class="ghost" onclick="loadALWASDemo()">載入論文示範資料</button>
+    <button class="ghost" onclick="copyToAllExperts()">套用至所有專家</button>
+    <label>μ</label><input type="number" id="pMu" value="2" min="1" max="50" step="1" style="width:56px">
+    <label>β</label><input type="number" id="pBeta" value="1" min="1" max="5" step="1" style="width:56px">
+    <label>ϑ</label><input type="number" id="pTheta" value="0.5" min="0" max="1" step="0.1" style="width:56px">
+    <button class="act" onclick="runAll()">執行分析 →</button>
+  </div>
+  <div class="matrix-scroll"><table class="eval" id="alwasTable"></table></div>
+</section>
+
+<!-- ============ S3 RESULTS ============ -->
+<section id="s3">
+  <h2><span class="tag">結果</span>分析結果</h2>
+  <div id="resultsBody"><div class="empty">尚未執行分析。請於「準則權重評估」或「績效指標評估」頁面點選「執行分析」。</div></div>
+</section>
+
+<!-- ============ S4 RECS ============ -->
+<section id="s4">
+  <h2><span class="tag">應用</span>萬芳醫院策略建議</h2>
+  <p class="lead">依分析結果自動產生之管理建議,聚焦於最具影響力的能力準則與最受影響的績效指標,提供萬芳醫院藥事部門可落地的行動方向。</p>
+  <div id="recsBody"><div class="empty">尚未執行分析。</div></div>
+</section>
+
+</div>
+
+<footer><div class="wrap">
+  <span>萬芳醫院藥事供應鏈 TASC 決策支援專家系統　·　TASC–OPA–ALWAS–FRS 框架</span>
+  <span>方法學依據:Sumrit &amp; Katthamaruesee, <i>Supply Chain Analytics</i> 13 (2026) 100187</span>
+</div></footer>
+
+<script>
+/* ===================== 資料定義 ===================== */
+const SCALE={NS:[0,0,1],ELS:[1,1,2],VLS:[1,2,3],LS:[2,3,4],MLS:[3,4,5],MS:[4,5,6],MHS:[5,6,7],HS:[6,7,8],VHS:[7,8,9],EHS:[9,10,10]};
+const ORDER=['NS','ELS','VLS','LS','MLS','MS','MHS','HS','VHS','EHS'];
+const ZH={NS:'無顯著性',ELS:'極低顯著性',VLS:'很低顯著性',LS:'低顯著性',MLS:'中低顯著性',MS:'中等顯著性',MHS:'中高顯著性',HS:'高顯著性',VHS:'很高顯著性',EHS:'極高顯著性'};
+const CRIT=[
+ {c:'A1',n:'整合先進科技',dim:'敏捷性',k:'agi',th:'RBV'},
+ {c:'A2',n:'資料可視性',dim:'敏捷性',k:'agi',th:'DC'},
+ {c:'A3',n:'應變計畫',dim:'敏捷性',k:'agi',th:'DC'},
+ {c:'A4',n:'危機管理團隊',dim:'敏捷性',k:'agi',th:'DC'},
+ {c:'A5',n:'持續環境掃描',dim:'適應性',k:'ada',th:'DC'},
+ {c:'A6',n:'彈性',dim:'適應性',k:'ada',th:'DC'},
+ {c:'A7',n:'跨職能團隊',dim:'適應性',k:'ada',th:'RBV'},
+ {c:'A8',n:'決策分權',dim:'適應性',k:'ada',th:'RBV'},
+ {c:'A9',n:'資訊與知識整合',dim:'一致性',k:'ali',th:'RBV'},
+ {c:'A10',n:'政策與法規一致',dim:'一致性',k:'ali',th:'RBV'},
+ {c:'A11',n:'目標一致',dim:'一致性',k:'ali',th:'RBV'},
+ {c:'A12',n:'風險分擔',dim:'一致性',k:'ali',th:'RBV'}
+];
+const PERF=[
+ {c:'P1',n:'訂單至調劑時間'},{c:'P2',n:'急用藥品滿足率'},{c:'P3',n:'以病人為中心的庫存覆蓋率'},
+ {c:'P4',n:'庫存緩衝指數'},{c:'P5',n:'復原時間'},{c:'P6',n:'每劑調劑成本'},
+ {c:'P7',n:'過期藥品耗損率'},{c:'P8',n:'未使用藥品浪費量'},{c:'P9',n:'關鍵藥品庫存可用指數'},
+ {c:'P10',n:'高優先藥品缺貨頻率'},{c:'P11',n:'藥品補貨前置時間'}
+];
+const DIMCOLOR={agi:'#1d5c56',ada:'#b8862f',ali:'#5a4a7a'};
+/* 論文示範資料 — OPA (7 專家 × 12 準則),Table 8 */
+const OPA_DEMO=[
+ ['HS','MHS','MS','MS','HS','MS','MHS'],['VHS','HS','HS','VHS','EHS','VHS','VHS'],
+ ['MHS','MS','MS','MHS','MS','MS','MHS'],['MS','MLS','MS','MLS','LS','MLS','MS'],
+ ['MS','MLS','MLS','MS','MS','MLS','MS'],['HS','HS','MHS','HS','MHS','HS','HS'],
+ ['HS','HS','HS','VHS','HS','HS','HS'],['MHS','MS','MS','MLS','MHS','MS','MHS'],
+ ['HS','MHS','MS','MHS','HS','MS','MHS'],['HS','VHS','VHS','HS','EHS','VHS','HS'],
+ ['MHS','MHS','HS','HS','MHS','MS','MHS'],['HS','HS','MHS','HS','MHS','HS','HS']
+];
+/* 論文示範資料 — ALWAS 共識矩陣 (11 P × 12 A),Table 12 */
+const ALWAS_DEMO=[
+ ['MHS','VHS','LS','LS','MHS','MS','HS','HS','HS','MS','MLS','MLS'],
+ ['HS','HS','VLS','VLS','MHS','MLS','MHS','MHS','HS','MHS','MHS','MS'],
+ ['VHS','HS','MHS','MS','MS','HS','HS','HS','MHS','MS','HS','MLS'],
+ ['MS','HS','HS','LS','HS','MHS','MS','LS','HS','MLS','MHS','HS'],
+ ['HS','MHS','MHS','MS','MS','MHS','HS','MS','MHS','MHS','HS','LS'],
+ ['MLS','HS','MS','LS','MHS','HS','MLS','MHS','HS','HS','MHS','MHS'],
+ ['MLS','MHS','HS','MS','MHS','LS','HS','LS','MHS','HS','MS','HS'],
+ ['VLS','MHS','LS','VLS','MS','HS','LS','LS','HS','HS','MHS','MHS'],
+ ['HS','HS','HS','LS','HS','LS','MHS','HS','MHS','MHS','HS','HS'],
+ ['LS','MHS','MHS','MHS','MHS','HS','MHS','MS','MHS','MS','MHS','MHS'],
+ ['HS','MHS','MLS','MS','HS','MHS','MS','HS','MS','MS','MS','MS']
+];
+/* 萬芳情境管理行動 */
+const CRIT_ACT={
+ A1:'導入即時庫存與處方資料整合平台,將條碼／RFID 與 HIS 系統串接,提升資料驅動決策速度。',
+ A2:'建立跨單位即時藥品可視儀表板,串接門診、住院與急診用藥需求、庫存水位與供應前置時間,使缺貨與需求激增可被即時辨識。',
+ A3:'制定缺藥緊急採購標準作業流程、替代供應商清單與關鍵藥品安全庫存協定,以維持中斷期間的供應連續性。',
+ A4:'成立由藥劑部、採購、臨床與資訊組成的跨職能危機應變小組,於突發事件中協調快速反應。',
+ A5:'持續監測 TFDA／FDA 缺藥公告、疫情訊號與季節性需求,將外部訊號納入採購與庫存規劃。',
+ A6:'建立彈性庫存門檻與可調整補貨週期,使供應鏈得以因應長期環境變化。',
+ A7:'由藥師、採購、臨床與物流組成跨職能團隊定期協作,追蹤醫療趨勢與供應風險並主動調整策略。',
+ A8:'於授權範圍內賦能第一線藥師進行就地調撥決策,促進敏捷反應與在地化應變。',
+ A9:'將供應鏈資訊與院方目標對齊,確保跨流程的目標導向決策。',
+ A10:'確保採購、儲存與調劑流程符合 TFDA 法規與醫院評鑑標準,建立合規監控機制,降低法規風險並促進跨部門治理。',
+ A11:'對齊供應鏈夥伴與院方策略目標,提升協調與效率。',
+ A12:'與供應商建立風險共擔與知識共享機制,共同辨識並管理供應風險。'
+};
+const PERF_ACT={
+ P1:'優化作業流程,縮短自醫令開立至病房交付藥品的時間。',
+ P2:'提升急診與緊急醫令在所需時限內的達交比率。',
+ P3:'依病人流量、疾病盛行率與治療急迫性動態調整庫存策略,同時降低缺貨與過剩,確保高需求藥品的持續可得。',
+ P4:'強化關鍵藥品於供應中斷期間可支應的天數,提升庫存韌性。',
+ P5:'縮短中斷事件後恢復正常營運所需時間。',
+ P6:'控管採購、儲存、處理與配送的單劑總成本。',
+ P7:'降低過期或未使用藥品的比例,減少庫存浪費。',
+ P8:'改善需求預測與庫存管理,降低退藥與報廢量。',
+ P9:'維持優先藥品高於再訂購點的時間比例,確保臨床即戰力與緊急應變能量。',
+ P10:'降低必要藥品不可得的次數,保障病人安全、治療連續性與藥事服務可靠度。',
+ P11:'縮短自再訂購啟動至入庫的前置時間,提升採購與供應效率。'
+};
+
+/* ===================== 模糊粗糙集核心 ===================== */
+function bonferroni(set){ // α1=α2=1
+  const m=set.length; if(m===0) return 0; if(m===1) return set[0];
+  let sum=0;
+  for(let i=0;i<m;i++){let prod=1;for(let j=0;j<m;j++)if(j!==i)prod*=set[j];sum+=set[i]*Math.pow(Math.max(prod,0),1/(m-1));}
+  return Math.pow(sum/m,0.5);
+}
+function frnEndpoint(v,vals){
+  const lo=vals.filter(x=>x<=v), up=vals.filter(x=>x>=v);
+  return [bonferroni(lo),bonferroni(up)];
+}
+// 一群專家對單一項目(各給 TFN)→ 彙總後 FRN {l:[-,+],m:[-,+],u:[-,+]}
+function aggregateFRN(tfns){
+  const L=tfns.map(t=>t[0]),M=tfns.map(t=>t[1]),U=tfns.map(t=>t[2]);
+  let acc={l:[0,0],m:[0,0],u:[0,0]};const p=tfns.length;
+  for(let e=0;e<p;e++){
+    const le=frnEndpoint(L[e],L),me=frnEndpoint(M[e],M),ue=frnEndpoint(U[e],U);
+    acc.l[0]+=le[0];acc.l[1]+=le[1];acc.m[0]+=me[0];acc.m[1]+=me[1];acc.u[0]+=ue[0];acc.u[1]+=ue[1];
+  }
+  for(const k of['l','m','u']){acc[k][0]/=p;acc[k][1]/=p;}
+  return acc;
+}
+// 計分函數 Eq.20
+function score(f){return (f.l[0]+f.l[1]+2*f.m[0]+2*f.m[1]+f.u[0]+f.u[1])/8;}
+// FRN 六端點陣列形式
+function frnArr(f){return [f.l[0],f.l[1],f.m[0],f.m[1],f.u[0],f.u[1]];}
+function scoreArr(a){return (a[0]+a[1]+2*a[2]+2*a[3]+a[4]+a[5])/8;}
+
+/* ===================== OPA ===================== */
+function computeOPA(matrix){ // matrix[critIndex][expertIndex]=linguistic
+  const aggreg=matrix.map(row=>aggregateFRN(row.map(t=>SCALE[t])));
+  const scores=aggreg.map(score);
+  // 排序(降冪)
+  const idx=scores.map((s,i)=>i).sort((a,b)=>scores[b]-scores[a]);
+  const n=scores.length;
+  // 封閉解:w_(r)=Σ_{k>=r} s_(k) / Σ_k k·s_(k)
+  const sorted=idx.map(i=>scores[i]);
+  let denom=0;for(let k=0;k<n;k++)denom+=(k+1)*sorted[k];
+  const wByRank=[];
+  for(let r=0;r<n;r++){let num=0;for(let k=r;k<n;k++)num+=sorted[k];wByRank.push(num/denom);}
+  const weights=new Array(n).fill(0);const ranks=new Array(n).fill(0);
+  idx.forEach((critI,r)=>{weights[critI]=wByRank[r];ranks[critI]=r+1;});
+  return {aggreg,scores,weights,ranks};
+}
+
+/* ===================== ALWAS ===================== */
+function computeALWAS(expertData,weights,mu,beta,theta){
+  const nP=PERF.length,nA=CRIT.length;
+  // 跨專家逐格建構模糊粗糙數(下界=共識、上界=分歧)
+  const F=[];
+  for(let i=0;i<nP;i++){const row=[];for(let j=0;j<nA;j++){const tfns=expertData.map(em=>SCALE[em[i][j]]);row.push(aggregateFRN(tfns));}F.push(row);}
+  // 欄最大值(各欄所有端點之最大)
+  const colMax=new Array(nA).fill(0);
+  for(let j=0;j<nA;j++){let mx=0;for(let i=0;i<nP;i++)mx=Math.max(mx,...frnArr(F[i][j]));colMax[j]=mx||1;}
+  // 正規化(效益型 Eq.25)
+  const TH=F.map(row=>row.map((f,j)=>{const a=frnArr(f).map(x=>x/colMax[j]);return a;}));
+  const clamp=x=>Math.min(Math.max(x,1e-6),1-1e-6);
+  const X1=[],X2=[],Z=[];
+  for(let i=0;i<nP;i++){
+    const x1=[],x2=[],z=[];
+    for(let e=0;e<6;e++){ // 六端點層
+      const vals=TH[i].map(a=>a[e]);
+      const S=vals.reduce((s,v)=>s+v,0)||1e-9;
+      let in1=0,in2=0;
+      for(let j=0;j<nA;j++){const f=clamp(vals[j]/S);in1+=weights[j]*Math.pow(-Math.log(1-f),mu);in2+=weights[j]*Math.pow(-Math.log(f),mu);}
+      const A1=S*(1-Math.exp(-Math.pow(in1,1/mu)));
+      const A2=S*Math.exp(-Math.pow(in2,1/mu));
+      x1.push(A1);x2.push(A2);
+      const fa=clamp(A1/(A1+A2)),fb=clamp(A2/(A1+A2));
+      const den=1+Math.pow(theta*Math.pow((1-fa)/fa,beta)+(1-theta)*Math.pow((1-fb)/fb,beta),1/beta);
+      z.push((Math.pow(A1,beta)+Math.pow(A2,beta))/den);
+    }
+    X1.push(x1);X2.push(x2);Z.push(z);
+  }
+  const crisp=Z.map(scoreArr);
+  const idx=crisp.map((s,i)=>i).sort((a,b)=>crisp[b]-crisp[a]);
+  const ranks=new Array(nP).fill(0);idx.forEach((pi,r)=>ranks[pi]=r+1);
+  return {Z,crisp,ranks};
+}
+
+/* ===================== UI 建構 ===================== */
+function buildScaleTable(){
+  document.getElementById('scaleTable').innerHTML=ORDER.map(k=>{
+    const t=SCALE[k];return `<tr><td>${ZH[k]}</td><td class="mono">${k}</td><td>${ORDER.indexOf(k)}</td><td class="scale-tfn">(${t[0]}, ${t[1]}, ${t[2]})</td></tr>`;
+  }).join('');
+}
+let opaState=[]; // [crit][expert]
+function rebuildOPA(){
+  const p=+document.getElementById('opaExperts').value;
+  // 保留既有值
+  const old=opaState;
+  opaState=CRIT.map((_,ci)=>Array.from({length:p},(_,e)=>(old[ci]&&old[ci][e])?old[ci][e]:'MS'));
+  renderOPA();
+}
+function optionsHTML(sel){return ORDER.map(k=>`<option value="${k}" ${k===sel?'selected':''}>${k}·${ZH[k].replace('顯著性','')}</option>`).join('');}
+function renderOPA(){
+  const p=opaState[0].length;
+  let h='<thead><tr><th class="corner">準則</th>';
+  for(let e=0;e<p;e++)h+=`<th class="mono">E${e+1}</th>`;
+  h+='</tr></thead><tbody>';
+  let lastDim='';
+  CRIT.forEach((cr,ci)=>{
+    if(cr.dim!==lastDim){h+=`<tr><td class="dim-head" colspan="${p+1}">${cr.dim}　${cr.dim==='敏捷性'?'Agility':cr.dim==='適應性'?'Adaptability':'Alignment'}</td></tr>`;lastDim=cr.dim;}
+    h+=`<tr><td class="rowlbl"><b>${cr.c}</b> ${cr.n}</td>`;
+    for(let e=0;e<p;e++)h+=`<td><select onchange="opaState[${ci}][${e}]=this.value">${optionsHTML(opaState[ci][e])}</select></td>`;
+    h+='</tr>';
+  });
+  document.getElementById('opaTable').innerHTML=h+'</tbody>';
+}
+let alwasData=[]; // [expert][P][A]
+function alwasExpertCount(){return +document.getElementById('alwasExperts').value;}
+function curExpertIdx(){return Math.max(0,+document.getElementById('alwasCur').value||0);}
+function refreshCurSelect(){
+  const p=alwasData.length,cur=Math.min(curExpertIdx(),p-1);
+  document.getElementById('alwasCur').innerHTML=Array.from({length:p},(_,e)=>`<option value="${e}" ${e===cur?'selected':''}>E${e+1}</option>`).join('');
+}
+function rebuildALWAS(){
+  const p=alwasExpertCount(),old=alwasData;
+  alwasData=Array.from({length:p},(_,e)=>PERF.map((_,i)=>CRIT.map((_,j)=>(old[e]&&old[e][i]&&old[e][i][j])?old[e][i][j]:(old[0]?old[0][i][j]:'MS'))));
+  refreshCurSelect();renderALWAS();
+}
+function renderALWAS(){
+  const e=Math.min(curExpertIdx(),alwasData.length-1);
+  let h='<thead><tr><th class="corner">指標＼準則 · E'+(e+1)+'</th>';
+  CRIT.forEach(c=>h+=`<th class="mono" title="${c.n}">${c.c}</th>`);
+  h+='</tr></thead><tbody>';
+  PERF.forEach((pf,pi)=>{
+    h+=`<tr><td class="rowlbl"><b>${pf.c}</b> ${pf.n}</td>`;
+    CRIT.forEach((_,ci)=>{h+=`<td><select onchange="alwasData[${e}][${pi}][${ci}]=this.value">${optionsHTML(alwasData[e][pi][ci])}</select></td>`;});
+    h+='</tr>';
+  });
+  document.getElementById('alwasTable').innerHTML=h+'</tbody>';
+}
+function copyToAllExperts(){
+  const e=curExpertIdx();
+  alwasData=alwasData.map(()=>alwasData[e].map(r=>r.slice()));
+  renderALWAS();
+}
+function loadOPADemo(){
+  document.getElementById('opaExperts').value='7';
+  opaState=OPA_DEMO.map(r=>r.slice());renderOPA();
+}
+function loadALWASDemo(){
+  document.getElementById('alwasExperts').value='7';
+  alwasData=Array.from({length:7},()=>ALWAS_DEMO.map(r=>r.slice()));
+  refreshCurSelect();renderALWAS();
+}
+
+/* ===================== 執行與呈現 ===================== */
+let lastResult=null;
+function runAll(){
+  const opa=computeOPA(opaState);
+  const mu=Math.max(1,+document.getElementById('pMu').value||2);
+  const beta=Math.max(1,+document.getElementById('pBeta').value||1);
+  const theta=Math.min(1,Math.max(0,+document.getElementById('pTheta').value));
+  const alwas=computeALWAS(alwasData,opa.weights,mu,beta,theta);
+  lastResult={opa,alwas};
+  renderResults();renderRecs();
+  showSection('s3');
+}
+function bar(label,val,max,color,rank){
+  const w=Math.max(2,(val/max)*100);
+  return `<div class="bar-row"><div class="lbl">${label}</div><div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div><div class="val">${val.toFixed(3)}<span class="rank-no">${rank}</span></div></div>`;
+}
+function renderResults(){
+  const {opa,alwas}=lastResult;
+  // OPA 排序
+  const cOrder=CRIT.map((c,i)=>({...c,w:opa.weights[i],s:opa.scores[i],r:opa.ranks[i]})).sort((a,b)=>a.r-b.r);
+  const wMax=Math.max(...opa.weights);
+  let html=`<h3>TASC 準則權重(OPA)</h3>
+   <div class="legend"><span><i style="background:${DIMCOLOR.agi}"></i>敏捷性</span><span><i style="background:${DIMCOLOR.ada}"></i>適應性</span><span><i style="background:${DIMCOLOR.ali}"></i>一致性</span></div>
+   <div class="bar-chart">${cOrder.map(c=>bar(`${c.c} ${c.n}`,c.w,wMax,DIMCOLOR[c.k],c.r)).join('')}</div>`;
+  // top3 準則
+  html+=`<div class="top3" style="margin-top:22px">`+cOrder.slice(0,3).map((c,i)=>`<div class="medal"><div class="pos">準則排名 #${i+1}</div><h4><span class="code">${c.c}</span> ${c.n}</h4><div class="sc">權重 ω = ${c.w.toFixed(3)}　·　${c.dim}</div></div>`).join('')+`</div>`;
+  // 準則明細表
+  html+=`<h3>準則彙總分數與排序</h3><table><thead><tr><th>排名</th><th class="mono">代碼</th><th>準則</th><th>能力構面</th><th class="mono">分數 h(δ)</th><th class="mono">權重 ω</th></tr></thead><tbody>`+
+    cOrder.map(c=>`<tr><td class="mono">${c.r}</td><td class="mono">${c.c}</td><td>${c.n}</td><td>${c.dim}</td><td class="mono">${c.s.toFixed(3)}</td><td class="mono"><b>${c.w.toFixed(3)}</b></td></tr>`).join('')+`</tbody></table>`;
+  // ALWAS
+  const pOrder=PERF.map((p,i)=>({...p,z:alwas.crisp[i],r:alwas.ranks[i]})).sort((a,b)=>a.r-b.r);
+  const zMax=Math.max(...alwas.crisp);
+  html+=`<h3 style="margin-top:40px">藥事績效指標排序(ALWAS · 綜合分數 Zᵢ)</h3>
+   <div class="bar-chart">${pOrder.map(p=>bar(`${p.c} ${p.n}`,p.z,zMax,'#2f4858',p.r)).join('')}</div>`;
+  html+=`<div class="top3" style="margin-top:22px">`+pOrder.slice(0,3).map((p,i)=>`<div class="medal" style="border-top-color:var(--rust)"><div class="pos" style="color:var(--rust)">指標排名 #${i+1}</div><h4><span class="code">${p.c}</span> ${p.n}</h4><div class="sc">綜合分數 Z = ${p.z.toFixed(3)}</div></div>`).join('')+`</div>`;
+  html+=`<h3>績效指標綜合分數明細</h3><table><thead><tr><th>排名</th><th class="mono">代碼</th><th>績效指標</th><th class="mono">綜合分數 Zᵢ</th></tr></thead><tbody>`+
+    pOrder.map(p=>`<tr><td class="mono">${p.r}</td><td class="mono">${p.c}</td><td>${p.n}</td><td class="mono"><b>${p.z.toFixed(3)}</b></td></tr>`).join('')+`</tbody></table>`;
+  document.getElementById('resultsBody').innerHTML=html;
+}
+function renderRecs(){
+  const {opa,alwas}=lastResult;
+  const cTop=CRIT.map((c,i)=>({...c,r:opa.ranks[i]})).sort((a,b)=>a.r-b.r).slice(0,3);
+  const pTop=PERF.map((p,i)=>({...p,r:alwas.ranks[i]})).sort((a,b)=>a.r-b.r).slice(0,3);
+  let h=`<h3>優先強化的能力準則</h3>`;
+  h+=cTop.map((c,i)=>`<div class="rec"><div class="rh"><span class="c">第 ${i+1} 優先 · ${c.c}</span><h4>${c.n}（${c.dim}）</h4></div><p>${CRIT_ACT[c.c]}</p></div>`).join('');
+  h+=`<h3 style="margin-top:34px">最受 TASC 影響、應優先改善的績效指標</h3>`;
+  h+=pTop.map((p,i)=>`<div class="rec" style="border-left-color:var(--rust)"><div class="rh"><span class="c" style="color:var(--rust)">第 ${i+1} 優先 · ${p.c}</span><h4>${p.n}</h4></div><p>${PERF_ACT[p.c]}</p></div>`).join('');
+  h+=`<div class="notice" style="margin-top:30px"><b>整合解讀 ——</b> 萬芳醫院藥事部門應將投資重點置於「${cTop[0].n}」等敏捷／一致性能力,透過提升資訊透明度與法規一致性,直接強化「${pTop[0].n}」「${pTop[1].n}」等與病人安全及治療連續性最相關的指標。效率導向指標(如成本、過期耗損)雖重要,但相較於供應連續性與韌性,其優先序為次要。</div>`;
+  document.getElementById('recsBody').innerHTML=h;
+}
+
+/* ===================== 導覽 ===================== */
+function showSection(id){
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('show',s.id===id));
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.s===id));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.getElementById('nav').addEventListener('click',e=>{const b=e.target.closest('button');if(b)showSection(b.dataset.s);});
+
+/* ===================== 初始化 ===================== */
+buildScaleTable();
+loadOPADemo();   // 預載論文 7 專家資料
+loadALWASDemo(); // 預載論文共識矩陣
+</script>
+</body>
+</html>

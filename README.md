@@ -1,1 +1,9 @@
-# wanfang-tasc-dss
+# 萬芳醫院藥事供應鏈 TASC 決策支援專家系統
+
+以三能力供應鏈框架(TASC:敏捷性／適應性／一致性)為核心,整合序數優先法(OPA)、
+Aczél–Alsina 加權評估(ALWAS)與模糊粗糙集(FRS)理論的藥事供應鏈決策支援工具。
+
+- **線上版**:`index.html`(純前端,所有運算於瀏覽器完成,資料不外傳)
+- 方法學依據:Sumrit & Katthamaruesee (2026), *Supply Chain Analytics* 13:100187
+
+> 本工具預設載入論文示範資料;專家評估以 E1–E7 代碼匿名輸入,不含病歷或醫療個資。
